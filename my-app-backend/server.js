@@ -4,20 +4,30 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieSession = require('cookie-session');
 const passport = require('passport');
+const connectDB = require('./config/db');
 require('dotenv').config();
+connectDB();
 
 // Mongoose Models need to be imported before passport uses them
-require('./models/User'); 
-require('./models/Restaurant');
+require('./models/user'); 
+require('./models/restaurant');
+require('./models/dish'); 
+require('./models/order'); 
+require('./models/review');
 
 // Passport configuration
-require('./services/passport');
+require('./config/passport');
 
-// Import routes
-const authRoutes = require('./routes/authRoutes');
-const restaurantRoutes = require('./routes/restaurantRoutes');
-const dishRoutes = require('./routes/dishRoutes');
-const orderRoutes = require('./routes/orderRoutes');
+// // Import routes
+const authRoutes = require('./routes/auth_routes');
+const restaurantRoutes = require('./routes/restaurant_routes');
+const dishRoutes = require('./routes/dish_routes');
+const orderRoutes = require('./routes/order_routes');
+
+
+
+
+
 
 // Initialize Express app
 const app = express();
@@ -36,15 +46,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-// --- Database Connection ---
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('Successfully connected to MongoDB Atlas!'))
-.catch(error => console.error('Error connecting to MongoDB:', error));
-
 // --- API Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
@@ -54,6 +55,6 @@ app.use('/api/orders', orderRoutes);
 
 // --- Start the Server ---
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server running on port:${PORT}`);
 });
 
