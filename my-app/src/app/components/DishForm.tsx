@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import axios from "axios";
+import {api} from "../lib/api";
 
 interface Dish {
   name: string;
@@ -28,7 +28,7 @@ export default function DishForm({ restaurantId }: Props) {
   const [loading, setLoading] = useState(false);
 
   const fetchDishes = async () => {
-    const res = await axios.get(`/api/restaurants/${restaurantId}/dishes`);
+    const res = await api.get(`/restaurants/${restaurantId}/dishes`);
     setDishes(res.data);
   };
 
@@ -45,7 +45,7 @@ export default function DishForm({ restaurantId }: Props) {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`/api/restaurants/${restaurantId}/dishes`, form);
+      await api.post(`/restaurants/${restaurantId}/dishes`, form);
       await fetchDishes();
       setForm({ name: "", description: "", price: 0, category: "", isVeg: true });
     } finally {

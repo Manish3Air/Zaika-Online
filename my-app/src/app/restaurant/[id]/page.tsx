@@ -1,8 +1,8 @@
 async function fetchData(id: string) {
   const base = process.env.NEXT_PUBLIC_API_BASE;
   const [restaurant, dishes] = await Promise.all([
-    fetch(`${base}/api/restaurants/${id}`).then((r) => r.json()),
-    fetch(`${base}/api/restaurants/${id}/dishes`).then((r) => r.json()),
+    fetch(`${base}/restaurants/${id}`).then((r) => r.json()),
+    fetch(`${base}/restaurants/${id}/dishes`).then((r) => r.json()),
   ]);
   return { restaurant, dishes };
 }

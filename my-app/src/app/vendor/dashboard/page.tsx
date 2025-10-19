@@ -4,13 +4,29 @@ import { useEffect, useState } from "react";
 import withAuth from "../../components/withAuth";
 import RestaurantForm from "../../components/RestaurantForm";
 import DishForm from "../../components/DishForm";
-import axios from "axios";
+import {api} from "../../lib/api";
 
-type Restaurant = {
-  id: string;
+// A separate interface for the nested address object for better organization
+interface Address {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+}
+
+// The main interface for the Restaurant object
+interface Restaurant {
+  _id: string; 
+  ownerId: string;
   name: string;
-  [key: string]: any;
-};
+  description: string;
+  address?: Address;
+  logoUrl?: string;
+  cuisine: string[];
+  openingHours?: string;
+  isVeg: boolean;
+  rating: number;
+}
 
 function Dashboard() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
@@ -21,7 +37,7 @@ function Dashboard() {
 
     async function fetchMyRestaurant() {
       try {
-        const res = await axios.get("/api/restaurants/my", {
+        const res = await api.get("/restaurants", {
           signal: controller.signal,
         });
         setRestaurant(res.data ?? null);
@@ -58,7 +74,7 @@ function Dashboard() {
           <h2 className="text-xl font-semibold mb-3">
             {restaurant.name} — Menu
           </h2>
-          <DishForm restaurantId={restaurant.id} />
+          <DishForm restaurantId={restaurant._id} />
         </>
       )}
     </div>

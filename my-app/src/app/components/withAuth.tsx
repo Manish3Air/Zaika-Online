@@ -16,9 +16,10 @@ export default function withAuth<P extends Record<string, unknown>>(
       if (!loading) {
         if (!user) {
           router.replace("/login");
-        } else if (requiredRole && user.role !== requiredRole) {
-          router.replace("/");
-        }
+         } 
+        //else if (requiredRole && user.role !== requiredRole) {
+        //   router.replace("/");
+        // }
       }
       // include router and requiredRole in deps; disable exhaustive-deps if your linter complains about stable functions
     }, [user, loading, router, requiredRole]);

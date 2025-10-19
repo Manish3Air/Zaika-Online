@@ -8,8 +8,10 @@ const Restaurant = mongoose.model('Restaurant');
 // GET /api/restaurants - Get all restaurants (public)
 // We will add filtering and search later.
 router.get('/', async (req, res) => {
+    // console.log("Api hit");
     try {
         const restaurants = await Restaurant.find({});
+        // console.log("Restaurants fetched:", restaurants.length);
         res.status(200).send(restaurants);
     } catch (error) {
         res.status(500).send({ error: 'Error fetching restaurants.' });

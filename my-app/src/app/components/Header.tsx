@@ -11,7 +11,7 @@ export default function Header() {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href="/" className="text-xl font-bold">Zaika Online</Link>
-          <Link href="/restaurants" className="text-sm hover:underline">
+          <Link href="/restaurant" className="text-sm hover:underline">
             Restaurants
           </Link>
         </div>

@@ -5,7 +5,7 @@ import { getCurrentUser, logoutUser } from "./api";
 import { useRouter } from "next/navigation";
 
 interface User {
-  id: string;
+  _id: string; // <-- Changed from 'id' to '_id' for consistency with MongoDB
   name: string;
   email: string;
   role: "customer" | "vendor";
@@ -38,10 +38,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const logout = async () => {
-    await logoutUser();
-    setUser(null);
-    router.push("/login");
-  };
+    try {
+      await logoutUser();
+      
+      // 1. Update the local state immediately
+      setUser(null); // <-- CRITICAL FIX: Update the state
+      
+      // 2. Then, handle redirection and alerts
+      alert('You have been logged out successfully.');
+      router.push('/');
+      router.refresh(); 
+
+    } catch (error) {
+      console.error('Logout failed:', error);
+      alert('There was an issue logging out. Please try again.');
+    }
+  }; 
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, setUser }}>
