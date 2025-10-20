@@ -36,7 +36,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 const allowedOrigins = [
   'http://localhost:3000',    // e.g. http://localhost:3000
-  'https://yourproductiondomain.com',   // e.g. https://yourproductiondomain.com
+  'https://zaika-online.vercel.app',   // e.g. https://yourproductiondomain.com
 ];
 
 app.use(cors({
