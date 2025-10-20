@@ -42,7 +42,7 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like Postman, mobile apps)
-    
+
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -56,11 +56,16 @@ app.use(cors({
 app.use(express.json());
 
 app.use(
-    cookieSession({
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        keys: [process.env.COOKIE_KEY]
-    })
+  cookieSession({
+    name: 'session',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    keys: [process.env.COOKIE_KEY],
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // true on HTTPS
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
 
