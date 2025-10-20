@@ -11,7 +11,8 @@ router.get('/google', passport.authenticate('google', {
 router.get('/google/callback', passport.authenticate('google'), (req, res) => {
     // On successful authentication, redirect to the frontend dashboard
     // In a real app, you'd redirect to your frontend URL e.g., res.redirect('/dashboard');
-    res.redirect('http://localhost:3000/vendor/dashboard'); 
+    const url = process.env.PROD_URL || 'http://localhost:3000';
+    res.redirect(`${url}/vendor/dashboard`);
 });
 
 
