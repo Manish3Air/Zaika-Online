@@ -121,7 +121,8 @@ const style = StyleSheet.create({
   },
   btnText: {
     fontSize: 18,
-    color: 'white'
+    color: 'white',
+    letterSpacing: 1.3
   },
   T1: {
     marginTop: 15,
