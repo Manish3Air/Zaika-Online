@@ -6,78 +6,76 @@ const cookieSession = require('cookie-session');
 const passport = require('passport');
 const connectDB = require('./config/db');
 require('dotenv').config();
+
 connectDB();
 
-// Mongoose Models need to be imported before passport uses them
-require('./models/user'); 
+// Import models BEFORE passport
+require('./models/user');
 require('./models/restaurant');
-require('./models/dish'); 
-require('./models/order'); 
+require('./models/dish');
+require('./models/order');
 require('./models/review');
 
 // Passport configuration
 require('./config/passport');
 
-// // Import routes
+// Import routes
 const authRoutes = require('./routes/auth_routes');
 const restaurantRoutes = require('./routes/restaurant_routes');
 const dishRoutes = require('./routes/dish_routes');
 const orderRoutes = require('./routes/order_routes');
 
-
-
-
-
-
-// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// -------------------
+// ✅ FIXED CORS SETUP
+// -------------------
 const allowedOrigins = [
-  'http://localhost:3000',    // e.g. http://localhost:3000
-  'https://zaika-online.vercel.app',   // e.g. https://yourproductiondomain.com
+  'http://localhost:3000',
+  'https://zaika-online.vercel.app',
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman, mobile apps)
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+  })
+);
 
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true, 
-}));
-
+// Parse incoming JSON
 app.use(express.json());
 
+// -------------------
+// ✅ FIXED COOKIE SESSION
+// -------------------
 app.use(
   cookieSession({
     name: 'session',
-    maxAge: 30 * 24 * 60 * 60 * 1000,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     keys: [process.env.COOKIE_KEY],
+    sameSite: 'none',  // ✅ always None for cross-site
+    secure: true,      // ✅ required for HTTPS (Render uses HTTPS)
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // true on HTTPS
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   })
 );
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-// --- API Routes ---
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/dishes', dishRoutes);
 app.use('/api/orders', orderRoutes);
 
-
-// --- Start the Server ---
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port:${PORT}`);
+// Simple route to test auth cookie
+app.get('/api/test', (req, res) => {
+  res.json({ user: req.user || null });
 });
 
+// Start the Server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port: ${PORT}`);
+});
