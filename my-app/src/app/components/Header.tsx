@@ -17,12 +17,14 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-3">
+          
           {!loading && user ? (
             <>
               <Link
                 href={user.role === "vendor" ? "/vendor/dashboard" : "#"}
                 className="px-3 py-1 border rounded-md"
               >
+                
                 {user.name}
               </Link>
               <button

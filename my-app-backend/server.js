@@ -44,6 +44,9 @@ app.use(
   })
 );
 
+// ✅ TRUST PROXY — REQUIRED for Render/HTTPS cookies
+app.set('trust proxy', 1);
+
 // Parse incoming JSON
 app.use(express.json());
 
@@ -55,8 +58,8 @@ app.use(
     name: 'session',
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     keys: [process.env.COOKIE_KEY],
-    sameSite: 'none',  // ✅ always None for cross-site
-    secure: true,      // ✅ required for HTTPS (Render uses HTTPS)
+    sameSite: 'none',  // ✅ required for cross-site cookies
+    secure: true,      // ✅ required for HTTPS on Render
     httpOnly: true,
   })
 );
@@ -64,18 +67,24 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// API Routes
+// -------------------
+// API ROUTES
+// -------------------
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/dishes', dishRoutes);
 app.use('/api/orders', orderRoutes);
 
-// Simple route to test auth cookie
+// -------------------
+// TEST ROUTE
+// -------------------
 app.get('/api/test', (req, res) => {
   res.json({ user: req.user || null });
 });
 
-// Start the Server
+// -------------------
+// START SERVER
+// -------------------
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port: ${PORT}`);
 });
