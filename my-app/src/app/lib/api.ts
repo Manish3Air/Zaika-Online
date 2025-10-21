@@ -5,7 +5,10 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-export const getCurrentUser = () => api.get('/auth/current_user', {
-  withCredentials: true
-}).then((r) => r.data);
+export const getCurrentUser = async () => {
+  const res = await api.get("/auth/current_user");
+  console.log(res.data);
+  return res.data || null; // ✅ ensures we return only the user object
+};
+
 export const logoutUser = () => api.post("/auth/logout");
