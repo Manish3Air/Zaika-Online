@@ -22,30 +22,29 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+// In config/passport.js
+
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: '/api/auth/google/callback',
-    proxy: true
-}, async (accessToken, refreshToken, profile, done) => {
-    try {
-        const existingUser = await User.findOne({ googleId: profile.id });
-
-        if (existingUser) {
-            return done(null, existingUser);
-        }
-
-        const user = await new User({
-            googleId: profile.id,
-            name: profile.displayName,
-            email: profile.emails[0].value,
-            avatar: profile.photos[0].value,
-            // By default, new users are customers. They can be changed to vendors manually
-            // or through a separate vendor registration process in the future.
-            role: 'customer' 
-        }).save();
-        done(null, user);
-    } catch (err) {
-        done(err, null);
+    callbackURL: "/api/auth/google/callback",
+    passReqToCallback: true
+  },
+  async (req, accessToken, refreshToken, profile, done) => { 
+    let user = await User.findOne({ googleId: profile.id });
+    if (user) {
+      return done(null, user);
     }
-}));
+
+    // User not found, create them
+    user = new User({
+      googleId: profile.id,
+      name: profile.displayName,
+      email: profile.emails[0].value,
+      avatar: profile.photos[0].value,
+      role: req.session.googleAuthRole || 'customer'
+    });
+    await user.save();
+    return done(null, user);
+  }
+));

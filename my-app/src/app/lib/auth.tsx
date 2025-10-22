@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     setLoading(false);
-  }, []); // Run only once on initial app load
+  }, []);
 
   const logout = () => {
     localStorage.removeItem("zaika_token");

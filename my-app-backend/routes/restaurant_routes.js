@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const requireLogin = require('../middlewares/authMiddleware');
+const protect = require('../middlewares/authMiddleware');
 
 const Restaurant = mongoose.model('Restaurant');
 
@@ -19,8 +19,9 @@ router.get('/', async (req, res) => {
 });
 
 // POST /api/restaurants - Register a new restaurant (vendor only)
-router.post('/', requireLogin, async (req, res) => {
+router.post('/', protect, async (req, res) => {
     // A simple check for vendor role. This could be a more robust middleware.
+    // console.log("API HIT")
     if (req.user.role !== 'vendor') {
         return res.status(403).send({ error: 'Only vendors can register restaurants.' });
     }
@@ -38,7 +39,7 @@ router.post('/', requireLogin, async (req, res) => {
             address,
             cuisine,
             openingHours,
-            ownerId: req.user.id
+            ownerId: req.user._id
         });
         await restaurant.save();
         res.status(201).send(restaurant);

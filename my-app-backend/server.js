@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const passport = require('passport');
 const connectDB = require('./config/db');
+const cookieSession = require('cookie-session');
 require('dotenv').config();
 
 // Connect to MongoDB
@@ -17,7 +18,7 @@ require('./models/order');
 require('./models/review');
 
 // Passport configuration
-require('./config/passport'); // You’ll modify this later to use JWT
+require('./config/passport'); 
 
 // Import routes
 const authRoutes = require('./routes/auth_routes');
@@ -40,6 +41,13 @@ app.use(
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
   })
+);
+
+app.use(
+    cookieSession({
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        keys: [process.env.COOKIE_KEY] // <-- HERE
+    })
 );
 
 app.set('trust proxy', 1);
