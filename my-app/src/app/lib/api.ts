@@ -11,4 +11,4 @@ export const getCurrentUser = async () => {
   return res.data || null; // ✅ ensures we return only the user object
 };
 
-export const logoutUser = () => api.post("/auth/logout");
+

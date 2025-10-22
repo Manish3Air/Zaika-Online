@@ -1,27 +1,31 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { getCurrentUser, logoutUser } from "./api";
 import { useRouter } from "next/navigation";
+import { jwtDecode, JwtPayload } from "jwt-decode"; // Import JwtPayload
 
 interface User {
-  _id: string; // <-- Changed from 'id' to '_id' for consistency with MongoDB
+  _id: string;
   name: string;
   email: string;
+  avatar?: string;
   role: "customer" | "vendor";
 }
+
+// Combine User with standard JWT 'exp' property
+interface DecodedToken extends User, JwtPayload {}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  logout: () => Promise<void>;
+  logout: () => void;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  logout: async () => {},
+  logout: () => {},
   setUser: () => {},
 });
 
@@ -31,29 +35,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    getCurrentUser()
-      .then((u) => setUser(u))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-  }, []);
+    let token: string | null = null;
 
-  const logout = async () => {
-    try {
-      await logoutUser();
-      
-      // 1. Update the local state immediately
-      setUser(null); // <-- CRITICAL FIX: Update the state
-      
-      // 2. Then, handle redirection and alerts
-      alert('You have been logged out successfully.');
-      router.push('/');
-      router.refresh(); 
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
 
-    } catch (error) {
-      console.error('Logout failed:', error);
-      alert('There was an issue logging out. Please try again.');
+    if (urlToken) {
+      token = urlToken;
+      
+      localStorage.setItem("zaika_token", urlToken); 
+      window.history.replaceState(null, '', window.location.pathname);
+    } else {
+      token = localStorage.getItem("zaika_token");
     }
-  }; 
+
+    
+    if (token) {
+      try {
+        const decoded: DecodedToken = jwtDecode(token);
+
+        const isExpired = decoded.exp ? decoded.exp * 1000 < Date.now() : false;
+
+        if (isExpired) {
+          console.warn("Token expired, logging out.");
+          localStorage.removeItem("zaika_token");
+          setUser(null);
+        } else {
+          setUser(decoded);
+        }
+      } catch (err) {
+        console.error("Invalid token:", err);
+        localStorage.removeItem("zaika_token"); // Clean up bad token
+        setUser(null);
+      }
+    }
+
+    setLoading(false);
+  }, []); // Run only once on initial app load
+
+  const logout = () => {
+    localStorage.removeItem("zaika_token");
+    setUser(null);
+    alert("You have been logged out successfully.");
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, setUser }}>

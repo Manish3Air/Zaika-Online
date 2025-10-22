@@ -39,6 +39,7 @@ passport.use(new GoogleStrategy({
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails[0].value,
+            avatar: profile.photos[0].value,
             // By default, new users are customers. They can be changed to vendors manually
             // or through a separate vendor registration process in the future.
             role: 'customer' 

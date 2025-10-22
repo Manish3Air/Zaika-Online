@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const requireLogin = require('../middlewares/login');
+const requireLogin = require('../middlewares/authMiddleware');
 
 const Restaurant = mongoose.model('Restaurant');
 
@@ -30,7 +30,7 @@ router.post('/', requireLogin, async (req, res) => {
     if (!name || !description) {
         return res.status(422).send({ error: 'Name and description are required.' });
     }
-    
+
     try {
         const restaurant = new Restaurant({
             name,

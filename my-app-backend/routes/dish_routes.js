@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const requireLogin = require('../middlewares/login');
+const requireLogin = require('../middlewares/authMiddleware');
 
 const Dish = mongoose.model('Dish');
 const Restaurant = mongoose.model('Restaurant');
@@ -20,7 +20,7 @@ router.post('/', requireLogin, async (req, res) => {
         if (!restaurant) {
             return res.status(404).send({ error: 'Restaurant not found.' });
         }
-        
+
         // Check if the current user owns this restaurant
         if (restaurant.ownerId.toString() !== req.user.id) {
             return res.status(403).send({ error: "You don't have permission to add dishes to this restaurant." });
