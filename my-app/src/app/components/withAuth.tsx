@@ -15,7 +15,7 @@ export default function withAuth<P extends Record<string, unknown>>(
     useEffect(() => {
       if (!loading) {
         if (!user) {
-          router.replace("/login");
+          router.replace("/");
         } 
         //else if (requiredRole && user.role !== requiredRole) {
         //   router.replace("/");

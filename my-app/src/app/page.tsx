@@ -2,7 +2,6 @@
 
 import RestaurantCard from "./components/RestaurantCard";
 
-// A separate interface for the nested address object for better organization
 interface Address {
   street?: string;
   city?: string;
@@ -10,9 +9,8 @@ interface Address {
   zip?: string;
 }
 
-// The main interface for the Restaurant object
 interface Restaurant {
-  _id: string; // Typically included from the database
+  _id: string;
   ownerId: string;
   name: string;
   description: string;
@@ -57,11 +55,6 @@ async function fetchRestaurants(): Promise<Restaurant[]> {
 
 export default async function HomePage() {
   const restaurants = await fetchRestaurants();
-  
-  // This console.log is now much more reliable
-
-
-  // The check for an empty array is now more robust
   if (!restaurants || restaurants.length === 0) {
     return (
       <div className="p-4 text-center text-gray-500">
@@ -75,7 +68,6 @@ export default async function HomePage() {
     <div>
       <h1 className="text-3xl font-bold mb-4">Discover Great Food Near You</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4">
-        {/* 3. Use the correct unique key from the database (_id) */}
         {restaurants.map((r) => (
           <RestaurantCard key={r._id} restaurant={r} />
         ))}

@@ -102,9 +102,8 @@ export default function RegisterRestaurantPage() {
   }
 };
 
-
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 px-4 py-10">
+    <div className="flex justify-center items-center min-h-screen px-4 py-10">
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-8 sm:p-10 border border-gray-100">
         <h1 className="text-4xl font-bold text-center text-indigo-700 mb-2">
           Register Your Restaurant

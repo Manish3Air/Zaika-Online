@@ -1,17 +1,12 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
+const { protect, isVendor } = require("../middlewares/authMiddleware");
+const { getVendorOrders, updateOrderStatus } = require("../controller/orderController");
 
-// This is a placeholder for your order routes.
-// We will implement the logic in Phase 5.
+// Get all orders for a vendor's restaurant
+router.get("/vendor/:restaurantId", protect, isVendor, getVendorOrders);
 
-// POST /api/orders - Create a new order (customer)
-router.post('/', (req, res) => {
-    res.send('Creating a new order');
-});
-
-// GET /api/orders/my-orders - Get customer's order history
-router.get('/my-orders', (req, res) => {
-    res.send("Fetching customer's order history");
-});
+// Update order status
+router.put("/:id/status", protect, isVendor, updateOrderStatus);
 
 module.exports = router;
