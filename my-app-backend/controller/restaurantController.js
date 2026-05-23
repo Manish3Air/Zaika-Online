@@ -3,7 +3,7 @@ const Restaurant = require("../models/restaurant");
 // ✅ GET all restaurants (Public)
 const getAllRestaurants = async (req, res) => {
   try {
-    const restaurants = await Restaurant.find({});
+    const restaurants = await Restaurant.find({ isListed: { $ne: false } });
     res.status(200).json(restaurants);
   } catch (error) {
     console.error(error);
@@ -14,7 +14,10 @@ const getAllRestaurants = async (req, res) => {
 // ✅ GET restaurant by ID (Public)
 const getRestaurantById = async (req, res) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id);
+    const restaurant = await Restaurant.findOne({
+      _id: req.params.id,
+      isListed: { $ne: false },
+    });
     if (!restaurant) {
       return res.status(404).json({ error: "Restaurant not found." });
     }
@@ -42,7 +45,7 @@ const getMyRestaurant = async (req, res) => {
 
 // ✅ CREATE a new restaurant (Vendor only)
 const createRestaurant = async (req, res) => {
-  if (req.user.role !== "vendor") {
+  if (!["vendor", "admin"].includes(req.user.role)) {
     return res.status(403).json({ error: "Only vendors can register restaurants." });
   }
 

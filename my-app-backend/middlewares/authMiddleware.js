@@ -30,6 +30,7 @@ const protect = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    req.user.role = decoded.role;
     next();
   } catch (err) {
     console.error(err);
@@ -39,10 +40,18 @@ const protect = async (req, res, next) => {
 
 // ✅ Vendor role check middleware
 const isVendor = (req, res, next) => {
-  if (req.user && req.user.role === "vendor") {
+  if (req.user && ["vendor", "admin"].includes(req.user.role)) {
     next();
   } else {
     res.status(403).json({ message: "Access denied: Vendor only" });
+  }
+};
+
+const isCustomer = (req, res, next) => {
+  if (req.user && ["customer", "admin"].includes(req.user.role)) {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied: Customer only" });
   }
 };
 
@@ -55,4 +64,4 @@ const isAdmin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, isVendor, isAdmin };
+module.exports = { protect, isVendor, isCustomer, isAdmin };

@@ -6,7 +6,7 @@ import { AuthProvider } from "./lib/auth";
 
 export const metadata: Metadata = {
   title: "Zaika Online",
-  description: "Discover and manage your favorite restaurants",
+  description: "Fresh restaurant discovery and food ordering.",
 };
 
 export default function RootLayout({
@@ -16,10 +16,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col antialiased">
         <AuthProvider>
           <Header />
-          <main className="flex-1 container mx-auto px-4 py-6">{children}</main>
+          <main className="flex-1">{children}</main>
           <Footer />
         </AuthProvider>
       </body>

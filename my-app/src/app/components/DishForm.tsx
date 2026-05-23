@@ -32,7 +32,6 @@ export default function DishForm({ restaurantId }: Props) {
   const [loading, setLoading] = useState(false);
   const [editingDish, setEditingDish] = useState<Dish | null>(null);
 
-  /** 🥗 Fetch Dishes for this Restaurant **/
   const fetchDishes = async () => {
     if (!restaurantId) return;
     try {
@@ -47,7 +46,6 @@ export default function DishForm({ restaurantId }: Props) {
     fetchDishes();
   }, [restaurantId]);
 
-  /** ✏️ Handle Form Input Changes **/
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target as any;
     setForm((prev) => ({
@@ -56,7 +54,6 @@ export default function DishForm({ restaurantId }: Props) {
     }));
   };
 
-  /** 💾 Add / Update Dish **/
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!restaurantId) return alert("Restaurant ID missing");
@@ -64,17 +61,13 @@ export default function DishForm({ restaurantId }: Props) {
 
     try {
       if (editingDish) {
-        // Update existing dish
         await api.put(`/dishes/${editingDish._id}`, { ...form, restaurantId });
       } else {
-        // Add new dish
         await api.post(`/dishes`, { ...form, restaurantId });
       }
 
-      // Refresh dishes after change
       await fetchDishes();
 
-      // Reset form
       setForm({
         name: "",
         description: "",
@@ -92,7 +85,6 @@ export default function DishForm({ restaurantId }: Props) {
     }
   };
 
-  /** ✍️ Edit Dish **/
   const handleEdit = (dish: Dish) => {
     setEditingDish(dish);
     setForm({
@@ -106,7 +98,6 @@ export default function DishForm({ restaurantId }: Props) {
     });
   };
 
-  /** ❌ Delete Dish **/
   const handleDelete = async (id?: string) => {
     if (!id) return;
     if (!confirm("Are you sure you want to delete this dish?")) return;
@@ -119,12 +110,11 @@ export default function DishForm({ restaurantId }: Props) {
   };
 
   return (
-    <div className="mt-8 bg-white p-6 rounded-lg shadow">
-      <h2 className="text-xl font-semibold mb-4">
+    <div className="zaika-card mt-6 rounded-2xl p-6">
+      <h2 className="mb-4 text-2xl font-black text-[#251611]">
         {editingDish ? "Edit Dish" : "Add New Dish"}
       </h2>
 
-      {/* 🧾 Dish Form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <input
           type="text"
@@ -132,7 +122,7 @@ export default function DishForm({ restaurantId }: Props) {
           placeholder="Dish Name"
           value={form.name}
           onChange={handleChange}
-          className="border rounded-md px-3 py-2"
+          className="zaika-input"
           required
         />
 
@@ -142,7 +132,7 @@ export default function DishForm({ restaurantId }: Props) {
           placeholder="Price (₹)"
           value={form.price}
           onChange={handleChange}
-          className="border rounded-md px-3 py-2"
+          className="zaika-input"
           required
         />
 
@@ -152,10 +142,10 @@ export default function DishForm({ restaurantId }: Props) {
           placeholder="Category (e.g., Starter, Main Course)"
           value={form.category}
           onChange={handleChange}
-          className="border rounded-md px-3 py-2"
+          className="zaika-input"
         />
 
-        <label className="flex items-center space-x-2">
+        <label className="flex items-center space-x-2 text-sm font-semibold text-[#765f55]">
           <input
             type="checkbox"
             name="isVeg"
@@ -171,7 +161,7 @@ export default function DishForm({ restaurantId }: Props) {
           placeholder="Image URL (optional)"
           value={form.imageUrl}
           onChange={handleChange}
-          className="md:col-span-2 border rounded-md px-3 py-2"
+          className="zaika-input md:col-span-2"
         />
 
         <textarea
@@ -179,47 +169,46 @@ export default function DishForm({ restaurantId }: Props) {
           placeholder="Description"
           value={form.description}
           onChange={handleChange}
-          className="md:col-span-2 border rounded-md px-3 py-2"
+          className="zaika-input md:col-span-2"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className="md:col-span-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
+          className="zaika-button md:col-span-2 py-3"
         >
           {loading ? "Saving..." : editingDish ? "Update Dish" : "Add Dish"}
         </button>
       </form>
 
-      {/* 🍽 Dish List */}
-      <h3 className="text-lg font-semibold mt-6 mb-3">Your Dishes</h3>
+      <h3 className="mt-7 mb-3 text-lg font-black text-[#251611]">Your Dishes</h3>
 
       {dishes.length === 0 ? (
-        <p className="text-sm text-gray-500">No dishes yet.</p>
+        <p className="text-sm text-[#765f55]">No dishes yet.</p>
       ) : (
         <ul className="space-y-3">
           {dishes.map((d) => (
             <li
               key={d._id}
-              className="border rounded-md p-3 flex justify-between items-center"
+              className="flex items-center justify-between rounded-xl border border-[#efd9bd] bg-[#fffdf8] p-3"
             >
               <div className="flex gap-3 items-center">
                 {d.imageUrl && (
                   <img
                     src={d.imageUrl}
                     alt={d.name}
-                    className="w-16 h-16 rounded object-cover"
+                    className="h-16 w-16 rounded-lg object-cover"
                   />
                 )}
                 <div>
-                  <h4 className="font-medium">{d.name}</h4>
-                  <p className="text-sm text-gray-600">{d.description}</p>
-                  <p className="text-sm text-gray-500">₹{d.price}</p>
-                  <p className="text-sm">{d.category}</p>
+                  <h4 className="font-bold text-[#251611]">{d.name}</h4>
+                  <p className="text-sm text-[#765f55]">{d.description}</p>
+                  <p className="text-sm font-bold text-[#d9472b]">₹{d.price}</p>
+                  <p className="text-sm text-[#765f55]">{d.category}</p>
                   {d.isVeg ? (
-                    <span className="text-green-600">🌱 Veg</span>
+                    <span className="text-sm font-semibold text-green-700">Veg</span>
                   ) : (
-                    <span className="text-red-600">🍗 Non-Veg</span>
+                    <span className="text-sm font-semibold text-red-700">Non-Veg</span>
                   )}
                 </div>
               </div>
@@ -227,14 +216,14 @@ export default function DishForm({ restaurantId }: Props) {
               <div className="flex gap-3">
                 <button
                   onClick={() => handleEdit(d)}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="rounded-full p-2 text-[#765f55] hover:bg-[#fff1d5] hover:text-[#d9472b]"
                   title="Edit"
                 >
                   <Pencil className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(d._id)}
-                  className="text-red-600 hover:text-red-800"
+                  className="rounded-full p-2 text-red-600 hover:bg-red-50 hover:text-red-700"
                   title="Delete"
                 >
                   <Trash2 className="w-5 h-5" />

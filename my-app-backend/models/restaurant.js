@@ -33,6 +33,18 @@ const restaurantSchema = new Schema({
         type: Number,
         default: 0,
     },
+    isListed: {
+        type: Boolean,
+        default: true,
+    },
+    isAppreciated: {
+        type: Boolean,
+        default: false,
+    },
+    appreciationNote: {
+        type: String,
+        default: "",
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Restaurant', restaurantSchema);

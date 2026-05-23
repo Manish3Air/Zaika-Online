@@ -9,7 +9,7 @@ interface User {
   name: string;
   email: string;
   avatar?: string;
-  role: "customer" | "vendor";
+  role: "customer" | "vendor" | "admin";
 }
 
 // Combine User with standard JWT 'exp' property

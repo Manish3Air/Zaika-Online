@@ -34,8 +34,38 @@ interface Restaurant {
   rating: number;
 }
 
+interface OrderItem {
+  _id?: string;
+  name?: string;
+  quantity: number;
+  price?: number;
+}
+
+interface VendorOrder {
+  _id: string;
+  customerId?: {
+    name?: string;
+    email?: string;
+  };
+  items: OrderItem[];
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+}
+
+const orderStatuses = [
+  "placed",
+  "accepted",
+  "preparing",
+  "out_for_delivery",
+  "delivered",
+  "cancelled",
+];
+
 function VendorDashboard() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const [orders, setOrders] = useState<VendorOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -62,33 +92,70 @@ function VendorDashboard() {
   return () => controller.abort();
 }, []);
 
+  useEffect(() => {
+    if (!restaurant?._id) return;
+
+    const restaurantId = restaurant._id;
+    const controller = new AbortController();
+
+    async function fetchOrders() {
+      setOrdersLoading(true);
+      try {
+        const res = await api.get(`/orders/vendor/${restaurantId}`, {
+          signal: controller.signal,
+        });
+        setOrders(res.data || []);
+      } catch (err: any) {
+        if (err.name !== "CanceledError") {
+          console.error("Error fetching orders:", err.response?.data || err.message);
+        }
+      } finally {
+        setOrdersLoading(false);
+      }
+    }
+
+    fetchOrders();
+    return () => controller.abort();
+  }, [restaurant?._id]);
+
+  const handleStatusChange = async (orderId: string, status: string) => {
+    try {
+      const res = await api.put(`/orders/${orderId}/status`, { status });
+      setOrders((current) =>
+        current.map((order) => (order._id === orderId ? res.data : order))
+      );
+    } catch (err: any) {
+      console.error("Error updating order status:", err.response?.data || err.message);
+      alert("Failed to update order status");
+    }
+  };
+
 
   const handleLogout = () => {
     localStorage.removeItem("zaika_token");
     window.location.href = "/";
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading) return <div className="px-4 py-12 text-center text-[#765f55]">Loading...</div>;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
+    <div className="mx-auto flex min-h-[calc(100vh-73px)] max-w-7xl px-4 py-6">
       <aside
         className={`${
           sidebarOpen ? "w-64" : "w-20"
-        } bg-white border-r border-gray-200 flex flex-col transition-all duration-300 shadow-md`}
+        } zaika-card flex flex-col rounded-2xl transition-all duration-300`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between border-b border-[#efd9bd] p-4">
           <h1
-            className={`text-xl font-bold text-blue-600 transition-all duration-300 ${
+            className={`text-xl font-black text-[#251611] transition-all duration-300 ${
               !sidebarOpen && "hidden"
             }`}
           >
-            Vendor Panel
+            Vendor Studio
           </h1>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-gray-600"
+            className="rounded-full p-2 text-[#765f55] hover:bg-[#fff1d5]"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -99,8 +166,8 @@ function VendorDashboard() {
             onClick={() => setActiveSection("dashboard")}
             className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg text-left transition ${
               activeSection === "dashboard"
-                ? "bg-blue-100 text-blue-700 font-semibold"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-[#fff1d5] text-[#d9472b] font-bold"
+                : "text-[#765f55] hover:bg-[#fff8ed]"
             }`}
           >
             <BarChart2 className="w-5 h-5" />
@@ -111,8 +178,8 @@ function VendorDashboard() {
             onClick={() => setActiveSection("manageDishes")}
             className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg text-left transition ${
               activeSection === "manageDishes"
-                ? "bg-blue-100 text-blue-700 font-semibold"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-[#fff1d5] text-[#d9472b] font-bold"
+                : "text-[#765f55] hover:bg-[#fff8ed]"
             }`}
           >
             <UtensilsCrossed className="w-5 h-5" />
@@ -123,8 +190,8 @@ function VendorDashboard() {
             onClick={() => setActiveSection("orders")}
             className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg text-left transition ${
               activeSection === "orders"
-                ? "bg-blue-100 text-blue-700 font-semibold"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-[#fff1d5] text-[#d9472b] font-bold"
+                : "text-[#765f55] hover:bg-[#fff8ed]"
             }`}
           >
             <ClipboardList className="w-5 h-5" />
@@ -135,8 +202,8 @@ function VendorDashboard() {
             onClick={() => setActiveSection("profile")}
             className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg text-left transition ${
               activeSection === "profile"
-                ? "bg-blue-100 text-blue-700 font-semibold"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-[#fff1d5] text-[#d9472b] font-bold"
+                : "text-[#765f55] hover:bg-[#fff8ed]"
             }`}
           >
             <User className="w-5 h-5" />
@@ -146,34 +213,38 @@ function VendorDashboard() {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 border-t text-red-600 hover:bg-red-50"
+          className="flex items-center gap-3 border-t border-[#efd9bd] px-4 py-3 text-red-600 hover:bg-red-50"
         >
           <LogOut className="w-5 h-5" />
           {sidebarOpen && "Logout"}
         </button>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto px-0 py-0 md:px-6">
         {activeSection === "dashboard" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">Dashboard Overview</h2>
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#d9472b]">
+              Vendor Studio
+            </p>
+            <h2 className="mb-4 mt-1 text-3xl font-black text-[#251611]">
+              Dashboard Overview
+            </h2>
             {!restaurant ? (
               <RestaurantForm onSuccess={setRestaurant} />
             ) : (
-              <div className="bg-white rounded-xl p-6 shadow">
-                <h3 className="text-xl font-semibold mb-2">
+              <div className="zaika-card rounded-2xl p-6">
+                <h3 className="mb-2 text-2xl font-black text-[#251611]">
                   {restaurant.name}
                 </h3>
-                <p className="text-gray-600 mb-2">{restaurant.description}</p>
-                <p className="text-gray-500 text-sm">
+                <p className="mb-4 text-[#765f55]">{restaurant.description}</p>
+                <p className="text-sm font-semibold text-[#765f55]">
                   Cuisine:{" "}
                   {restaurant.cuisine?.length
                     ? restaurant.cuisine.join(", ")
                     : "N/A"}
                 </p>
-                <p className="text-gray-500 text-sm">
-                  Rating: ⭐ {restaurant.rating || "Not rated yet"}
+                <p className="text-sm font-semibold text-[#765f55]">
+                  Rating: {restaurant.rating || "Not rated yet"}
                 </p>
               </div>
             )}
@@ -182,28 +253,87 @@ function VendorDashboard() {
 
         {activeSection === "manageDishes" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">Manage Dishes</h2>
+            <h2 className="mb-4 text-3xl font-black text-[#251611]">Manage Dishes</h2>
             {restaurant ? (
               <DishForm restaurantId={restaurant._id} />
             ) : (
-              <p>Please register your restaurant first.</p>
+              <p className="text-[#765f55]">Please register your restaurant first.</p>
             )}
           </section>
         )}
 
         {activeSection === "orders" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">Orders Received</h2>
-            <div className="bg-white rounded-xl p-6 shadow text-gray-600">
-              <p>No orders yet.</p>
-            </div>
+            <h2 className="mb-4 text-3xl font-black text-[#251611]">Orders Received</h2>
+            {ordersLoading ? (
+              <div className="zaika-card rounded-2xl p-6 text-[#765f55]">
+                Loading orders...
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="zaika-card rounded-2xl p-6 text-[#765f55]">
+                <p>No orders yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <div key={order._id} className="zaika-card rounded-2xl p-5">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <h3 className="font-black text-[#251611]">
+                          Order #{order._id.slice(-6).toUpperCase()}
+                        </h3>
+                        <p className="text-sm text-[#765f55]">
+                          {order.customerId?.name || "Customer"}{" "}
+                          {order.customerId?.email ? `(${order.customerId.email})` : ""}
+                        </p>
+                        <p className="text-sm text-[#765f55]">
+                          {new Date(order.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+
+                      <select
+                        value={order.status}
+                        onChange={(event) =>
+                          handleStatusChange(order._id, event.target.value)
+                        }
+                        className="zaika-input max-w-48 text-sm"
+                      >
+                        {orderStatuses.map((status) => (
+                          <option key={status} value={status}>
+                            {status.replaceAll("_", " ")}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <ul className="mt-4 divide-y divide-[#efd9bd]">
+                      {order.items.map((item, index) => (
+                        <li
+                          key={item._id || `${order._id}-${index}`}
+                          className="flex justify-between py-2 text-sm text-[#765f55]"
+                        >
+                          <span>
+                            {item.name || "Dish"} x {item.quantity}
+                          </span>
+                          <span>₹{(item.price || 0) * item.quantity}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <p className="mt-3 text-right font-black text-[#251611]">
+                      Total: ₹{order.totalAmount}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
         {activeSection === "profile" && (
           <section>
-            <h2 className="text-2xl font-bold mb-4">Vendor Profile</h2>
-            <div className="bg-white p-6 rounded-xl shadow space-y-3">
+            <h2 className="mb-4 text-3xl font-black text-[#251611]">Vendor Profile</h2>
+            <div className="zaika-card space-y-3 rounded-2xl p-6 text-[#765f55]">
               <p>
                 <span className="font-semibold">Name:</span>{" "}
                 {restaurant?.name || "N/A"}
@@ -219,7 +349,7 @@ function VendorDashboard() {
                 {restaurant?.address?.street || "N/A"},{" "}
                 {restaurant?.address?.city || ""}
               </p>
-              <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+              <button className="zaika-button mt-4 px-4 py-2">
                 Edit Profile
               </button>
             </div>

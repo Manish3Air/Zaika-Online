@@ -7,7 +7,11 @@ const createDish = async (req, res) => {
         const { restaurantId, name, description, imageUrl, price, category, isVeg } = req.body;
 
         // Check if vendor owns this restaurant
-        const restaurant = await Restaurant.findOne({ _id: restaurantId, ownerId: req.user._id });
+        const restaurantQuery = { _id: restaurantId };
+        if (req.user.role !== "admin") {
+            restaurantQuery.ownerId = req.user._id;
+        }
+        const restaurant = await Restaurant.findOne(restaurantQuery);
         if (!restaurant) return res.status(403).json({ message: "Unauthorized" });
 
         const dish = await Dish.create({ restaurantId, name, description, imageUrl, price, category, isVeg });
@@ -22,14 +26,15 @@ const getDishesByRestaurant = async (req, res) => {
         const { restaurantId } = req.params;
 
         // Check if user is logged in and is a vendor
-        const isVendorRoute = req.user && req.user.role === "vendor";
+        const isVendorRoute = req.user && ["vendor", "admin"].includes(req.user.role);
 
         if (isVendorRoute) {
             // Verify vendor owns this restaurant
-            const restaurant = await Restaurant.findOne({
-                _id: restaurantId,
-                ownerId: req.user._id,
-            });
+            const restaurantQuery = { _id: restaurantId };
+            if (req.user.role !== "admin") {
+                restaurantQuery.ownerId = req.user._id;
+            }
+            const restaurant = await Restaurant.findOne(restaurantQuery);
 
             if (!restaurant) {
                 return res.status(403).json({ message: "Unauthorized" });
@@ -62,7 +67,7 @@ const updateDish = async (req, res) => {
         if (!dish) return res.status(404).json({ message: "Dish not found" });
 
         // Check ownership
-        if (dish.restaurantId.ownerId.toString() !== req.user._id.toString()) {
+        if (req.user.role !== "admin" && dish.restaurantId.ownerId.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "Unauthorized" });
         }
 
@@ -83,7 +88,7 @@ const deleteDish = async (req, res) => {
         if (!dish) return res.status(404).json({ message: "Dish not found" });
 
         // Check ownership
-        if (dish.restaurantId.ownerId.toString() !== req.user._id.toString()) {
+        if (req.user.role !== "admin" && dish.restaurantId.ownerId.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: "Unauthorized" });
         }
 

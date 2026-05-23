@@ -4,9 +4,9 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "../hooks/useAuth";
 
-export default function withAuth<P extends Record<string, unknown>>(
+export default function withAuth<P extends object = object>(
   WrappedComponent: React.ComponentType<P>,
-  requiredRole?: "vendor" | "customer"
+  requiredRole?: "vendor" | "customer" | "admin"
 ) {
   const Protected: React.FC<P> = (props) => {
     const { user, loading } = useAuth();
@@ -16,18 +16,21 @@ export default function withAuth<P extends Record<string, unknown>>(
       if (!loading) {
         if (!user) {
           router.replace("/");
-        } 
-        //else if (requiredRole && user.role !== requiredRole) {
-        //   router.replace("/");
-        // }
+        } else if (requiredRole && user.role !== requiredRole && user.role !== "admin") {
+          router.replace("/");
+        }
       }
     }, [user, loading, router, requiredRole]);
 
-    if (loading || !user) {
+    if (
+      loading ||
+      !user ||
+      (requiredRole && user.role !== requiredRole && user.role !== "admin")
+    ) {
       return <div className="p-8 text-center">Checking authentication...</div>;
     }
 
-    return <WrappedComponent {...(props as P)} />;
+    return <WrappedComponent {...props} />;
   };
 
   Protected.displayName = `withAuth(${

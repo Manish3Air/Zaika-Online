@@ -31,20 +31,44 @@ passport.use(new GoogleStrategy({
     passReqToCallback: true
   },
   async (req, accessToken, refreshToken, profile, done) => { 
+    const requestedRole = ["customer", "vendor"].includes(req.session.googleAuthRole)
+      ? req.session.googleAuthRole
+      : "customer";
+    const adminEmails = (process.env.ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+    const email = profile.emails[0].value;
+    const isAdmin = adminEmails.includes(email.toLowerCase());
+
     let user = await User.findOne({ googleId: profile.id });
     if (user) {
-      return done(null, user);
+      if (isAdmin && user.role !== "admin") {
+        user.role = "admin";
+        await user.save();
+      } else if (!isAdmin && requestedRole === "vendor" && user.role === "customer") {
+        user.role = "vendor";
+        await user.save();
+      }
+
+      return done(null, {
+        ...user.toObject(),
+        selectedRole: isAdmin ? "admin" : requestedRole,
+      });
     }
 
     // User not found, create them
     user = new User({
       googleId: profile.id,
       name: profile.displayName,
-      email: profile.emails[0].value,
+      email,
       avatar: profile.photos[0].value,
-      role: req.session.googleAuthRole || 'customer'
+      role: isAdmin ? "admin" : requestedRole
     });
     await user.save();
-    return done(null, user);
+    return done(null, {
+      ...user.toObject(),
+      selectedRole: user.role === "admin" ? "admin" : requestedRole,
+    });
   }
 ));

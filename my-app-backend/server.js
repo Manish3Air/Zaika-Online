@@ -24,6 +24,7 @@ const authRoutes = require("./routes/auth_routes");
 const restaurantRoutes = require("./routes/restaurant_routes");
 const dishRoutes = require("./routes/dish_routes");
 const orderRoutes = require("./routes/order_routes");
+const adminRoutes = require("./routes/admin_routes");
 
 // ⚙️ Initialize app
 const app = express();
@@ -42,7 +43,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
@@ -70,6 +71,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/dishes", dishRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
 
 // 🧪 Test Route
 app.get("/api/test", (req, res) => {

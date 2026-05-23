@@ -22,7 +22,7 @@ router.get(
   passport.authenticate("google", { session: false }),
   async (req, res) => {
     try {
-      const role = req.user.role;
+      const role = req.user.selectedRole || req.user.role;
 
       const token = jwt.sign(
         {
@@ -42,6 +42,10 @@ router.get(
       }
 
       const PROD_URL = process.env.PROD_URL || "http://localhost:3000";
+
+      if (role === "admin") {
+        return res.redirect(`${PROD_URL}/admin?token=${token}`);
+      }
 
       if (role === "vendor") {
         // ✅ Check if vendor already has a registered restaurant

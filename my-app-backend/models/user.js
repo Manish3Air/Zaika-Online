@@ -20,7 +20,7 @@ const userSchema = new Schema({
     },
     role: {
         type: String,
-        enum: ['customer', 'vendor'],
+        enum: ['customer', 'vendor', 'admin'],
         default: 'customer',
     },
 }, { timestamps: true });
