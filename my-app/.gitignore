@@ -1,6 +1,10 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 next-dev.err.log
 next-dev.log
+
+frontend.err.log
+frontend.log
+
 # dependencies
 /node_modules
 /.pnp

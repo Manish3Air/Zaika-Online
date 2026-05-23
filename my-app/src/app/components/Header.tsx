@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import useAuthContext from "../hooks/useAuth";
 import Image from "next/image";
-import { Menu, ReceiptText, Search, Store, X } from "lucide-react";
+import { Heart, Menu, ReceiptText, Search, Store, X } from "lucide-react";
 
 export default function Header() {
   const { user, loading, logout } = useAuthContext();
@@ -80,6 +80,15 @@ export default function Header() {
                   Orders
                 </Link>
               )}
+              {(user.role === "customer" || user.role === "admin") && (
+                <Link
+                  href="/favourites"
+                  className="hidden items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-[#765f55] transition hover:bg-[#fff1d5] hover:text-[#d9472b] md:flex"
+                >
+                  <Heart className="h-4 w-4" />
+                  Favourites
+                </Link>
+              )}
               {user.role === "admin" && (
                 <Link
                   href="/vendor/dashboard"
@@ -137,13 +146,22 @@ export default function Header() {
                         : "Profile"}
                   </Link>
                   {user.role === "customer" && (
-                    <Link
-                      href="/orders"
-                      onClick={() => setIsDropdownOpen(false)}
-                      className="block px-4 py-2 text-sm font-semibold text-[#251611] transition hover:bg-[#fff1d5]"
-                    >
-                      My Orders
-                    </Link>
+                    <>
+                      <Link
+                        href="/orders"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="block px-4 py-2 text-sm font-semibold text-[#251611] transition hover:bg-[#fff1d5]"
+                      >
+                        My Orders
+                      </Link>
+                      <Link
+                        href="/favourites"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="block px-4 py-2 text-sm font-semibold text-[#251611] transition hover:bg-[#fff1d5]"
+                      >
+                        Favourite Items
+                      </Link>
+                    </>
                   )}
                   {user.role === "admin" && (
                     <>
@@ -160,6 +178,13 @@ export default function Header() {
                         className="block px-4 py-2 text-sm font-semibold text-[#251611] transition hover:bg-[#fff1d5]"
                       >
                         My Orders
+                      </Link>
+                      <Link
+                        href="/favourites"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="block px-4 py-2 text-sm font-semibold text-[#251611] transition hover:bg-[#fff1d5]"
+                      >
+                        Favourite Items
                       </Link>
                     </>
                   )}

@@ -16,6 +16,8 @@ export default function RestaurantForm({ onSuccess }: Props) {
       city: "",
       state: "",
       zip: "",
+      latitude: "",
+      longitude: "",
     },
     cuisine: "",
     logoUrl: "",
@@ -64,6 +66,8 @@ export default function RestaurantForm({ onSuccess }: Props) {
           city: "",
           state: "",
           zip: "",
+          latitude: "",
+          longitude: "",
         },
         cuisine: "",
         logoUrl: "",
@@ -103,7 +107,7 @@ export default function RestaurantForm({ onSuccess }: Props) {
           required
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {["street", "city", "state", "zip"].map((field) => (
+          {["street", "city", "state", "zip", "latitude", "longitude"].map((field) => (
             <input
               key={field}
               type="text"

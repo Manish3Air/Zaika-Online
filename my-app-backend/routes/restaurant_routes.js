@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
   getAllRestaurants,
+  getNearbyRestaurants,
   getRestaurantById,
   getMyRestaurant,
   createRestaurant,
@@ -20,6 +21,7 @@ router.delete("/vendor/delete", protect, isVendor, deleteRestaurant);
 
 // ✅ Public routes
 router.get("/", getAllRestaurants);
+router.get("/nearby/search", getNearbyRestaurants);
 router.get("/:id", getRestaurantById);
 
 module.exports = router;

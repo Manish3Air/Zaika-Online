@@ -80,6 +80,24 @@ const getMyOrders = async (req, res) => {
   }
 };
 
+// Get a single logged-in customer's order for tracking
+const getMyOrderById = async (req, res) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      customerId: req.user._id,
+    }).populate("restaurantId", "name logoUrl address");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Get all orders for a vendor's restaurant
 const getVendorOrders = async (req, res) => {
   try {
@@ -126,4 +144,4 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getMyOrders, getVendorOrders, updateOrderStatus };
+module.exports = { createOrder, getMyOrders, getMyOrderById, getVendorOrders, updateOrderStatus };

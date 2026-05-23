@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import RestaurantCard from "../components/RestaurantCard";
-import { Filter, Search } from "lucide-react";
+import { Filter, LocateFixed, Search } from "lucide-react";
 
 interface Address {
   street?: string;
   city?: string;
   state?: string;
   zip?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface Restaurant {
@@ -23,6 +25,7 @@ interface Restaurant {
   openingHours?: string;
   isVeg: boolean;
   rating: number;
+  distanceKm?: number;
 }
 
 
@@ -33,6 +36,8 @@ export default function RestaurantsPage() {
   const [query, setQuery] = useState("");
   const [vegOnly, setVegOnly] = useState(false);
   const [sortBy, setSortBy] = useState("rating");
+  const [nearbyCity, setNearbyCity] = useState("");
+  const [nearbyMessage, setNearbyMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +55,70 @@ export default function RestaurantsPage() {
       });
   }, []);
 
+  const fetchNearbyByCity = async () => {
+    const city = nearbyCity.trim();
+    if (!city) {
+      setNearbyMessage("Enter a city to find nearby restaurants.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setNearbyMessage(null);
+
+    try {
+      const res = await api.get("/restaurants/nearby/search", {
+        params: { city },
+      });
+      const data = Array.isArray(res.data) ? res.data : [];
+      setRestaurants(data);
+      setNearbyMessage(`Showing restaurants near ${city}.`);
+    } catch (err) {
+      console.error("Failed to fetch nearby restaurants:", err);
+      setError("Could not load nearby restaurants. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchNearbyByLocation = () => {
+    if (!navigator.geolocation) {
+      setNearbyMessage("Location is not available in this browser. Try city search.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setNearbyMessage(null);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const res = await api.get("/restaurants/nearby/search", {
+            params: {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              radiusKm: 12,
+            },
+          });
+          const data = Array.isArray(res.data) ? res.data : [];
+          setRestaurants(data);
+          setSortBy("distance");
+          setNearbyMessage("Showing restaurants within 12 km of your location.");
+        } catch (err) {
+          console.error("Failed to fetch nearby restaurants:", err);
+          setError("Could not load restaurants near your location.");
+        } finally {
+          setLoading(false);
+        }
+      },
+      () => {
+        setLoading(false);
+        setNearbyMessage("Location permission was not granted. Try city search.");
+      }
+    );
+  };
+
   const filteredRestaurants = restaurants.filter((r) => {
     const queryLower = query.toLowerCase();
     const nameMatch = r.name.toLowerCase().includes(queryLower);
@@ -59,6 +128,10 @@ export default function RestaurantsPage() {
   }).sort((a, b) => {
     if (sortBy === "name") {
       return a.name.localeCompare(b.name);
+    }
+
+    if (sortBy === "distance") {
+      return (a.distanceKm ?? Number.MAX_SAFE_INTEGER) - (b.distanceKm ?? Number.MAX_SAFE_INTEGER);
     }
 
     return (b.rating || 0) - (a.rating || 0);
@@ -128,8 +201,44 @@ export default function RestaurantsPage() {
           className="zaika-input lg:w-44"
         >
           <option value="rating">Top rated</option>
+          <option value="distance">Nearest</option>
           <option value="name">Name A-Z</option>
         </select>
+      </div>
+
+      <div className="mb-8 grid gap-3 rounded-2xl border border-[#efd9bd] bg-[#fffdf8] p-4 md:grid-cols-[1fr_auto_auto] md:items-center">
+        <label className="relative block">
+          <MapCityIcon />
+          <input
+            placeholder="Find nearby by city"
+            value={nearbyCity}
+            onChange={(event) => setNearbyCity(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") fetchNearbyByCity();
+            }}
+            className="zaika-input pl-10"
+          />
+        </label>
+        <button
+          type="button"
+          onClick={fetchNearbyByCity}
+          className="rounded-xl border border-[#efd9bd] px-4 py-3 text-sm font-bold text-[#251611] transition hover:bg-[#fff1d5]"
+        >
+          Search Nearby
+        </button>
+        <button
+          type="button"
+          onClick={fetchNearbyByLocation}
+          className="zaika-button flex items-center justify-center gap-2 px-4 py-3 text-sm"
+        >
+          <LocateFixed className="h-4 w-4" />
+          Use Location
+        </button>
+        {nearbyMessage && (
+          <p className="text-sm font-semibold text-[#765f55] md:col-span-3">
+            {nearbyMessage}
+          </p>
+        )}
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredRestaurants.length > 0 ? (
@@ -143,5 +252,11 @@ export default function RestaurantsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function MapCityIcon() {
+  return (
+    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#d9472b]" />
   );
 }

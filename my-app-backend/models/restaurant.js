@@ -21,6 +21,8 @@ const restaurantSchema = new Schema({
         city: String,
         state: String,
         zip: String,
+        latitude: Number,
+        longitude: Number,
     },
     logoUrl: String,
     cuisine: [String],

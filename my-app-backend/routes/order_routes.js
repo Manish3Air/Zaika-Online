@@ -4,6 +4,7 @@ const { protect, isVendor, isCustomer } = require("../middlewares/authMiddleware
 const {
   createOrder,
   getMyOrders,
+  getMyOrderById,
   getVendorOrders,
   updateOrderStatus,
 } = require("../controller/orderController");
@@ -11,6 +12,7 @@ const {
 // Customer routes
 router.post("/", protect, isCustomer, createOrder);
 router.get("/my", protect, getMyOrders);
+router.get("/my/:id", protect, isCustomer, getMyOrderById);
 
 // Get all orders for a vendor's restaurant
 router.get("/vendor/:restaurantId", protect, isVendor, getVendorOrders);

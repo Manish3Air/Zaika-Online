@@ -1,5 +1,24 @@
 const Restaurant = require("../models/restaurant");
 
+const toNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const distanceInKm = (fromLat, fromLng, toLat, toLng) => {
+  const radius = 6371;
+  const latDelta = ((toLat - fromLat) * Math.PI) / 180;
+  const lngDelta = ((toLng - fromLng) * Math.PI) / 180;
+  const a =
+    Math.sin(latDelta / 2) * Math.sin(latDelta / 2) +
+    Math.cos((fromLat * Math.PI) / 180) *
+      Math.cos((toLat * Math.PI) / 180) *
+      Math.sin(lngDelta / 2) *
+      Math.sin(lngDelta / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return radius * c;
+};
+
 // ✅ GET all restaurants (Public)
 const getAllRestaurants = async (req, res) => {
   try {
@@ -25,6 +44,67 @@ const getRestaurantById = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error fetching restaurant." });
+  }
+};
+
+// ✅ GET restaurants near a customer (Public)
+const getNearbyRestaurants = async (req, res) => {
+  try {
+    const { city, state } = req.query;
+    const latitude = toNumber(req.query.latitude);
+    const longitude = toNumber(req.query.longitude);
+    const radiusKm = toNumber(req.query.radiusKm) || 8;
+
+    const restaurants = await Restaurant.find({ isListed: { $ne: false } });
+
+    if (latitude !== null && longitude !== null) {
+      const nearby = restaurants
+        .map((restaurant) => {
+          const restaurantLatitude = restaurant.address?.latitude;
+          const restaurantLongitude = restaurant.address?.longitude;
+
+          if (
+            typeof restaurantLatitude !== "number" ||
+            typeof restaurantLongitude !== "number"
+          ) {
+            return null;
+          }
+
+          const distance = distanceInKm(
+            latitude,
+            longitude,
+            restaurantLatitude,
+            restaurantLongitude
+          );
+
+          return {
+            ...restaurant.toObject(),
+            distanceKm: Number(distance.toFixed(1)),
+          };
+        })
+        .filter((restaurant) => restaurant && restaurant.distanceKm <= radiusKm)
+        .sort((a, b) => a.distanceKm - b.distanceKm);
+
+      return res.status(200).json(nearby);
+    }
+
+    const normalizedCity = city ? String(city).trim().toLowerCase() : "";
+    const normalizedState = state ? String(state).trim().toLowerCase() : "";
+
+    const nearby = restaurants.filter((restaurant) => {
+      const restaurantCity = restaurant.address?.city?.toLowerCase() || "";
+      const restaurantState = restaurant.address?.state?.toLowerCase() || "";
+
+      return (
+        (!normalizedCity || restaurantCity.includes(normalizedCity)) &&
+        (!normalizedState || restaurantState.includes(normalizedState))
+      );
+    });
+
+    res.status(200).json(nearby);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error fetching nearby restaurants." });
   }
 };
 
@@ -117,6 +197,7 @@ const deleteRestaurant = async (req, res) => {
 
 module.exports = {
   getAllRestaurants,
+  getNearbyRestaurants,
   getRestaurantById,
   getMyRestaurant,
   createRestaurant,

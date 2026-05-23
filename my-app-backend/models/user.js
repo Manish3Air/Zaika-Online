@@ -23,6 +23,10 @@ const userSchema = new Schema({
         enum: ['customer', 'vendor', 'admin'],
         default: 'customer',
     },
+    favouriteDishes: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Dish',
+    }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);

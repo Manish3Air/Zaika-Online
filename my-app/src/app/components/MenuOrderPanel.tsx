@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Heart, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { api } from "../lib/api";
 import useAuthContext from "../hooks/useAuth";
 
@@ -53,6 +53,7 @@ export default function MenuOrderPanel({
   const [cart, setCart] = useState<Record<string, CartItem>>({});
   const [address, setAddress] = useState<DeliveryAddress>(emptyAddress);
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [favouriteIds, setFavouriteIds] = useState<Set<string>>(new Set());
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +65,22 @@ export default function MenuOrderPanel({
   );
   const deliveryFee = itemCount > 0 ? 29 : 0;
   const total = subtotal + deliveryFee;
+
+  useEffect(() => {
+    if (!user || !["customer", "admin"].includes(user.role)) return;
+
+    api
+      .get("/favourites")
+      .then((res) => {
+        const ids = Array.isArray(res.data)
+          ? res.data.map((dish: Dish) => dish._id)
+          : [];
+        setFavouriteIds(new Set(ids));
+      })
+      .catch(() => {
+        setFavouriteIds(new Set());
+      });
+  }, [user]);
 
   const updateQuantity = (dish: Dish, delta: number) => {
     setMessage(null);
@@ -81,6 +98,40 @@ export default function MenuOrderPanel({
 
       return nextCart;
     });
+  };
+
+  const toggleFavourite = async (dish: Dish) => {
+    setMessage(null);
+    setError(null);
+
+    if (!user || !["customer", "admin"].includes(user.role)) {
+      setError("Please login as a customer to save favourite items.");
+      return;
+    }
+
+    const isFavourite = favouriteIds.has(dish._id);
+    const nextIds = new Set(favouriteIds);
+
+    if (isFavourite) {
+      nextIds.delete(dish._id);
+    } else {
+      nextIds.add(dish._id);
+    }
+
+    setFavouriteIds(nextIds);
+
+    try {
+      const res = isFavourite
+        ? await api.delete(`/favourites/${dish._id}`)
+        : await api.post(`/favourites/${dish._id}`);
+      const ids = Array.isArray(res.data)
+        ? res.data.map((item: Dish) => item._id)
+        : Array.from(nextIds);
+      setFavouriteIds(new Set(ids));
+    } catch (err: any) {
+      setFavouriteIds(favouriteIds);
+      setError(err?.response?.data?.message || "Could not update favourites.");
+    }
   };
 
   const placeOrder = async () => {
@@ -145,6 +196,7 @@ export default function MenuOrderPanel({
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {dishes.map((dish) => {
           const quantity = cart[dish._id]?.quantity || 0;
+          const isFavourite = favouriteIds.has(dish._id);
 
           return (
             <div
@@ -164,9 +216,24 @@ export default function MenuOrderPanel({
                   <h3 className="text-lg font-black text-[#251611]">
                     {dish.name}
                   </h3>
-                  <span className="shrink-0 rounded-full bg-[#fff1d5] px-3 py-1 text-sm font-black text-[#d9472b]">
-                    {formatCurrency(dish.price)}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full bg-[#fff1d5] px-3 py-1 text-sm font-black text-[#d9472b]">
+                      {formatCurrency(dish.price)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleFavourite(dish)}
+                      className={`rounded-full border p-2 transition ${
+                        isFavourite
+                          ? "border-[#d9472b] bg-red-50 text-[#d9472b]"
+                          : "border-[#efd9bd] text-[#765f55] hover:bg-[#fff1d5] hover:text-[#d9472b]"
+                      }`}
+                      aria-label={`${isFavourite ? "Remove" : "Save"} ${dish.name} as favourite`}
+                      title={isFavourite ? "Remove favourite" : "Add favourite"}
+                    >
+                      <Heart className={`h-4 w-4 ${isFavourite ? "fill-current" : ""}`} />
+                    </button>
+                  </div>
                 </div>
 
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-[#765f55]">
