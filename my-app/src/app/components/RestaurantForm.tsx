@@ -2,27 +2,69 @@
 
 import { useState } from "react";
 import { api } from "../lib/api";
+import CloudinaryImageUpload from "./CloudinaryImageUpload";
 
 interface Props {
   onSuccess: (data: any) => void;
+  initialRestaurant?: any;
+  mode?: "create" | "edit";
+  onCancel?: () => void;
 }
 
-export default function RestaurantForm({ onSuccess }: Props) {
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
+const emptyForm = {
+  name: "",
+  description: "",
+  address: {
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
+    latitude: "",
+    longitude: "",
+  },
+  cuisine: "",
+  logoUrl: "",
+  openingHours: "",
+  isVeg: false,
+};
+
+const getInitialForm = (restaurant?: any) => {
+  if (!restaurant) return emptyForm;
+
+  return {
+    name: restaurant.name || "",
+    description: restaurant.description || "",
     address: {
-      street: "",
-      city: "",
-      state: "",
-      zip: "",
-      latitude: "",
-      longitude: "",
+      street: restaurant.address?.street || "",
+      city: restaurant.address?.city || "",
+      state: restaurant.address?.state || "",
+      zip: restaurant.address?.zip || "",
+      latitude:
+        restaurant.address?.latitude === undefined
+          ? ""
+          : String(restaurant.address.latitude),
+      longitude:
+        restaurant.address?.longitude === undefined
+          ? ""
+          : String(restaurant.address.longitude),
     },
-    cuisine: "",
-    logoUrl: "",
-    openingHours: "",
-    isVeg: false,
+    cuisine: Array.isArray(restaurant.cuisine)
+      ? restaurant.cuisine.join(", ")
+      : restaurant.cuisine || "",
+    logoUrl: restaurant.logoUrl || "",
+    openingHours: restaurant.openingHours || "",
+    isVeg: Boolean(restaurant.isVeg),
+  };
+};
+
+export default function RestaurantForm({
+  onSuccess,
+  initialRestaurant,
+  mode = "create",
+  onCancel,
+}: Props) {
+  const [form, setForm] = useState({
+    ...getInitialForm(initialRestaurant),
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -49,33 +91,36 @@ export default function RestaurantForm({ onSuccess }: Props) {
     setMessage("");
 
     try {
-      const res = await api.post("/restaurants", {
+      const payload = {
         ...form,
+        address: {
+          ...form.address,
+          latitude: form.address.latitude ? Number(form.address.latitude) : undefined,
+          longitude: form.address.longitude ? Number(form.address.longitude) : undefined,
+        },
         cuisine: form.cuisine
           .split(",")
-          .map((item) => item.trim())
+          .map((item: string) => item.trim())
           .filter(Boolean),
-      });
-      setMessage("Restaurant created successfully!");
+      };
+      const res =
+        mode === "edit"
+          ? await api.put("/restaurants/vendor/update", payload)
+          : await api.post("/restaurants", payload);
+      setMessage(
+        mode === "edit"
+          ? "Restaurant updated successfully!"
+          : "Restaurant created successfully!"
+      );
       onSuccess(res.data);
-      setForm({
-        name: "",
-        description: "",
-        address: {
-          street: "",
-          city: "",
-          state: "",
-          zip: "",
-          latitude: "",
-          longitude: "",
-        },
-        cuisine: "",
-        logoUrl: "",
-        openingHours: "",
-        isVeg: false,
-      });
+      if (mode === "create") {
+        setForm(emptyForm);
+      }
     } catch (err: any) {
-      setMessage(err.response?.data?.error || "Error creating restaurant");
+      setMessage(
+        err.response?.data?.error ||
+          (mode === "edit" ? "Error updating restaurant" : "Error creating restaurant")
+      );
     } finally {
       setLoading(false);
     }
@@ -83,9 +128,13 @@ export default function RestaurantForm({ onSuccess }: Props) {
 
   return (
     <div className="zaika-card max-w-2xl rounded-2xl p-6">
-      <h2 className="text-2xl font-black text-[#251611]">Create Your Restaurant</h2>
+      <h2 className="text-2xl font-black text-[#251611]">
+        {mode === "edit" ? "Edit Restaurant Profile" : "Create Your Restaurant"}
+      </h2>
       <p className="mb-5 mt-1 text-sm text-[#765f55]">
-        Add the core details customers will see on Zaika Online.
+        {mode === "edit"
+          ? "Update the details customers will see on Zaika Online."
+          : "Add the core details customers will see on Zaika Online."}
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
@@ -143,6 +192,14 @@ export default function RestaurantForm({ onSuccess }: Props) {
           onChange={handleChange}
           className="zaika-input"
         />
+        <CloudinaryImageUpload
+          label="Restaurant image"
+          purpose="restaurant-logo"
+          value={form.logoUrl}
+          onUploaded={(imageUrl) =>
+            setForm((current) => ({ ...current, logoUrl: imageUrl }))
+          }
+        />
         <label className="flex items-center gap-2 text-sm font-semibold text-[#765f55]">
           <input
             type="checkbox"
@@ -152,13 +209,30 @@ export default function RestaurantForm({ onSuccess }: Props) {
           />
           Pure veg restaurant
         </label>
-        <button
-          type="submit"
-          disabled={loading}
-          className="zaika-button w-full py-3"
-        >
-          {loading ? "Creating..." : "Create Restaurant"}
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            type="submit"
+            disabled={loading}
+            className="zaika-button flex-1 py-3"
+          >
+            {loading
+              ? mode === "edit"
+                ? "Updating..."
+                : "Creating..."
+              : mode === "edit"
+                ? "Update Restaurant"
+                : "Create Restaurant"}
+          </button>
+          {mode === "edit" && onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="rounded-full border border-[#efd9bd] px-6 py-3 font-bold text-[#765f55] hover:bg-[#fff8ed]"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
       {message && <p className="mt-3 text-center text-sm font-semibold text-[#765f55]">{message}</p>}
     </div>

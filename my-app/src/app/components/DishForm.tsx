@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../lib/api";
 import { Pencil, Trash2 } from "lucide-react";
+import CloudinaryImageUpload from "./CloudinaryImageUpload";
 
 interface Dish {
   _id?: string;
@@ -163,6 +164,17 @@ export default function DishForm({ restaurantId }: Props) {
           onChange={handleChange}
           className="zaika-input md:col-span-2"
         />
+
+        <div className="md:col-span-2">
+          <CloudinaryImageUpload
+            label="Dish image"
+            purpose="dish-image"
+            value={form.imageUrl}
+            onUploaded={(imageUrl) =>
+              setForm((current) => ({ ...current, imageUrl }))
+            }
+          />
+        </div>
 
         <textarea
           name="description"

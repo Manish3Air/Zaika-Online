@@ -26,6 +26,7 @@ const dishRoutes = require("./routes/dish_routes");
 const orderRoutes = require("./routes/order_routes");
 const adminRoutes = require("./routes/admin_routes");
 const favouriteRoutes = require("./routes/favourite_routes");
+const uploadRoutes = require("./routes/upload_routes");
 
 // ⚙️ Initialize app
 const app = express();
@@ -74,6 +75,7 @@ app.use("/api/dishes", dishRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/favourites", favouriteRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 // 🧪 Test Route
 app.get("/api/test", (req, res) => {

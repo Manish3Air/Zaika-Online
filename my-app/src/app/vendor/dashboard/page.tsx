@@ -69,6 +69,7 @@ function VendorDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   useEffect(() => {
   const controller = new AbortController();
@@ -199,7 +200,10 @@ function VendorDashboard() {
           </button>
 
           <button
-            onClick={() => setActiveSection("profile")}
+            onClick={() => {
+              setActiveSection("profile");
+              setIsEditingProfile(false);
+            }}
             className={`flex items-center gap-3 w-full px-4 py-2 rounded-lg text-left transition ${
               activeSection === "profile"
                 ? "bg-[#fff1d5] text-[#d9472b] font-bold"
@@ -333,26 +337,49 @@ function VendorDashboard() {
         {activeSection === "profile" && (
           <section>
             <h2 className="mb-4 text-3xl font-black text-[#251611]">Vendor Profile</h2>
-            <div className="zaika-card space-y-3 rounded-2xl p-6 text-[#765f55]">
-              <p>
-                <span className="font-semibold">Name:</span>{" "}
-                {restaurant?.name || "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold">Cuisine:</span>{" "}
-                {restaurant?.cuisine?.length
-                  ? restaurant.cuisine.join(", ")
-                  : "N/A"}
-              </p>
-              <p>
-                <span className="font-semibold">Address:</span>{" "}
-                {restaurant?.address?.street || "N/A"},{" "}
-                {restaurant?.address?.city || ""}
-              </p>
-              <button className="zaika-button mt-4 px-4 py-2">
-                Edit Profile
-              </button>
-            </div>
+            {!restaurant ? (
+              <RestaurantForm onSuccess={setRestaurant} />
+            ) : isEditingProfile ? (
+              <RestaurantForm
+                mode="edit"
+                initialRestaurant={restaurant}
+                onSuccess={(updatedRestaurant) => {
+                  setRestaurant(updatedRestaurant);
+                  setIsEditingProfile(false);
+                }}
+                onCancel={() => setIsEditingProfile(false)}
+              />
+            ) : (
+              <div className="zaika-card space-y-3 rounded-2xl p-6 text-[#765f55]">
+                <p>
+                  <span className="font-semibold">Name:</span>{" "}
+                  {restaurant.name || "N/A"}
+                </p>
+                <p>
+                  <span className="font-semibold">Cuisine:</span>{" "}
+                  {restaurant.cuisine?.length
+                    ? restaurant.cuisine.join(", ")
+                    : "N/A"}
+                </p>
+                <p>
+                  <span className="font-semibold">Address:</span>{" "}
+                  {[restaurant.address?.street, restaurant.address?.city]
+                    .filter(Boolean)
+                    .join(", ") || "N/A"}
+                </p>
+                <p>
+                  <span className="font-semibold">Opening Hours:</span>{" "}
+                  {restaurant.openingHours || "N/A"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingProfile(true)}
+                  className="zaika-button mt-4 px-4 py-2"
+                >
+                  Edit Profile
+                </button>
+              </div>
+            )}
           </section>
         )}
       </main>
